@@ -1,671 +1,2053 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VGA — Penilaian Kualitas Kontras Citra Radiografi</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VGA — Penilaian Kualitas Kontras Citra Radiografi</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap");
+      :root {
+        --bg: #0d0f12;
+        --bg2: #13161b;
+        --bg3: #1a1e26;
+        --border: #252932;
+        --border2: #2f3540;
+        --text: #e8eaf0;
+        --muted: #6b7280;
+        --accent: #4f8ef7;
+        --accent2: #7dd3a8;
+        --warn: #f0a050;
+        --card-r: 12px;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 15px;
+        line-height: 1.7;
+        min-height: 100vh;
+      }
 
-  :root {
-    --bg:       #0d0f12;
-    --bg2:      #13161b;
-    --bg3:      #1a1e26;
-    --border:   #252932;
-    --border2:  #2f3540;
-    --text:     #e8eaf0;
-    --muted:    #6b7280;
-    --accent:   #4f8ef7;
-    --accent2:  #7dd3a8;
-    --warn:     #f0a050;
-    --card-r:   12px;
-  }
+      /* HEADER */
+      header {
+        border-bottom: 1px solid var(--border);
+        padding: 14px 32px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        position: sticky;
+        top: 0;
+        background: var(--bg);
+        z-index: 100;
+      }
+      .logo-mark {
+        width: 34px;
+        height: 34px;
+        border: 1.5px solid var(--accent);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+      header h1 {
+        font-family: "Instrument Serif", serif;
+        font-size: 16px;
+        font-weight: 400;
+      }
+      header h1 span {
+        color: var(--muted);
+        font-style: italic;
+      }
+      .hdr-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .progress-bar {
+        width: 130px;
+        height: 4px;
+        background: var(--border);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 99px;
+        transition: width 0.4s ease;
+      }
+      #progress-label {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        padding: 3px 9px;
+        border-radius: 99px;
+        background: #1a2520;
+        color: var(--accent2);
+        border: 1px solid #2d4a3a;
+        white-space: nowrap;
+      }
+      .status-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      /* SCREENS */
+      .screen {
+        display: none;
+      }
+      .screen.active {
+        display: block;
+      }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    line-height: 1.6;
-    min-height: 100vh;
-  }
+      /* SHARED LAYOUT */
+      .page-wrap {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 48px 24px;
+      }
+      .page-wrap-wide {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 28px 24px;
+      }
 
-  /* HEADER */
-  header {
-    border-bottom: 1px solid var(--border);
-    padding: 16px 32px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 100;
-  }
-  .logo-mark {
-    width: 36px; height: 36px;
-    border: 1.5px solid var(--accent);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--accent);
-  }
-  header h1 {
-    font-family: 'Instrument Serif', serif;
-    font-size: 17px;
-    font-weight: 400;
-  }
-  header h1 span { color: var(--muted); font-style: italic; }
-  .progress-wrap { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-  .progress-bar { width: 140px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
-  #progress-label { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+      /* BADGES & HEADINGS */
+      .badge {
+        display: inline-block;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        border-radius: 99px;
+        padding: 3px 12px;
+        margin-bottom: 20px;
+      }
+      .page-title {
+        font-family: "Instrument Serif", serif;
+        font-size: 30px;
+        font-weight: 400;
+        line-height: 1.25;
+        margin-bottom: 12px;
+      }
+      .page-title em {
+        color: var(--accent);
+        font-style: italic;
+      }
+      .page-subtitle {
+        color: var(--muted);
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
 
-  /* SCREENS */
-  .screen { display: none; }
-  .screen.active { display: block; }
+      /* NASKAH PENJELASAN */
+      .naskah-box {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+        padding: 28px 32px;
+        margin-bottom: 24px;
+        font-size: 14px;
+        line-height: 1.8;
+      }
+      .naskah-box h3 {
+        font-family: "Instrument Serif", serif;
+        font-size: 20px;
+        font-weight: 400;
+        margin-bottom: 16px;
+        color: var(--text);
+      }
+      .naskah-box p {
+        color: #c8cad4;
+        margin-bottom: 14px;
+      }
+      .naskah-box ul {
+        margin: 10px 0 14px 20px;
+        color: #c8cad4;
+      }
+      .naskah-box ul li {
+        margin-bottom: 6px;
+      }
+      .naskah-box .contact-box {
+        background: var(--bg3);
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin: 14px 0;
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        line-height: 2;
+      }
+      .naskah-box .contact-box span {
+        color: var(--muted);
+      }
+      .naskah-box strong {
+        color: var(--text);
+      }
+      .naskah-box em {
+        color: var(--accent2);
+        font-style: italic;
+      }
 
-  /* INTRO */
-  #screen-intro { max-width: 660px; margin: 64px auto; padding: 0 24px; }
-  .intro-badge {
-    display: inline-block;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    border-radius: 99px;
-    padding: 3px 12px;
-    margin-bottom: 22px;
-  }
-  #screen-intro h2 {
-    font-family: 'Instrument Serif', serif;
-    font-size: 34px;
-    font-weight: 400;
-    line-height: 1.25;
-    margin-bottom: 14px;
-  }
-  #screen-intro h2 em { color: var(--accent); font-style: italic; }
-  #screen-intro p { color: var(--muted); margin-bottom: 10px; }
+      /* STEP INDICATOR */
+      .step-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-bottom: 32px;
+      }
+      .step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-family: "DM Mono", monospace;
+      }
+      .step-num {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 500;
+        flex-shrink: 0;
+      }
+      .step.done .step-num {
+        background: var(--accent2);
+        color: #0d1f18;
+      }
+      .step.active .step-num {
+        background: var(--accent);
+        color: #fff;
+      }
+      .step.pending .step-num {
+        background: var(--border2);
+        color: var(--muted);
+      }
+      .step.done .step-label {
+        color: var(--accent2);
+      }
+      .step.active .step-label {
+        color: var(--text);
+      }
+      .step.pending .step-label {
+        color: var(--muted);
+      }
+      .step-line {
+        flex: 1;
+        height: 1px;
+        background: var(--border2);
+        margin: 0 8px;
+        min-width: 16px;
+      }
 
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 28px 0; }
-  .info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); padding: 14px 18px; }
-  .info-card .label { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
-  .info-card .value { font-size: 19px; font-weight: 500; }
-  .info-card .value small { font-size: 13px; color: var(--muted); font-weight: 400; }
+      /* FORM */
+      .divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 24px 0;
+      }
+      .form-group {
+        margin-bottom: 14px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 5px;
+        font-family: "DM Mono", monospace;
+        letter-spacing: 0.04em;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        background: var(--bg2);
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 15px;
+        padding: 10px 14px;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .form-group input:focus,
+      .form-group select:focus {
+        border-color: var(--accent);
+      }
+      .form-group select option {
+        background: var(--bg2);
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
 
-  .scale-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; }
-  .scale-table th { text-align: left; padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
-  .scale-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  .scale-table tr:last-child td { border-bottom: none; }
+      /* CHECKBOX */
+      .checkbox-group {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 18px 20px;
+        background: var(--bg2);
+        border: 2px solid var(--border2);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 14px;
+        user-select: none;
+      }
+      .checkbox-group:hover {
+        border-color: var(--accent);
+        background: #151922;
+      }
+      .checkbox-group.checked {
+        border-color: var(--accent2);
+        background: #0e1a14;
+      }
+      .checkbox-group input[type="checkbox"] {
+        display: none;
+      }
 
-  .skor-badge { width: 28px; height: 28px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; }
-  .s1 { background: #2a1a1a; color: #e05050; }
-  .s2 { background: #2a2210; color: var(--warn); }
-  .s3 { background: #1a2520; color: #60c080; }
-  .s4 { background: #1a2035; color: var(--accent); }
+      /* Kotak centang yang jelas dan eksplisit */
+      .custom-check {
+        width: 26px;
+        height: 26px;
+        border: 2.5px solid var(--border2);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+        transition: all 0.25s;
+        background: var(--bg3);
+        font-size: 15px;
+        font-weight: 700;
+        color: transparent;
+      }
+      .checkbox-group:hover .custom-check {
+        border-color: var(--accent);
+      }
+      .checkbox-group.checked .custom-check {
+        background: var(--accent2);
+        border-color: var(--accent2);
+        color: #0d1f18;
+      }
 
-  /* FORM */
-  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
-  .form-group { margin-bottom: 14px; }
-  .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-family: 'DM Mono', monospace; letter-spacing: .04em; }
-  .form-group input, .form-group select {
-    width: 100%;
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    padding: 10px 14px;
-    outline: none;
-    transition: border-color .2s;
-  }
-  .form-group input:focus, .form-group select:focus { border-color: var(--accent); }
-  .form-group select option { background: var(--bg2); }
+      /* Label nomor urut */
+      .check-number {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--muted);
+        margin-bottom: 4px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .check-text {
+        font-size: 14px;
+        color: #c8cad4;
+        line-height: 1.65;
+        flex: 1;
+      }
+      .check-text strong {
+        color: var(--text);
+      }
 
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all .2s; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-primary:hover { background: #3a7de8; }
-  .btn-primary:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; }
-  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border2); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-success { background: var(--accent2); color: #0d1f18; }
-  .btn-success:hover { opacity: .9; }
+      /* Petunjuk centang */
+      .centang-hint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        background: #1a1d27;
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 12px;
+        color: var(--muted);
+        font-family: "DM Mono", monospace;
+      }
+      .centang-hint .hint-icon {
+        font-size: 14px;
+      }
 
-  /* ASSESS */
-  #screen-assess { max-width: 1160px; margin: 0 auto; padding: 28px 24px; }
-  .assess-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
-  .assess-title { font-family: 'Instrument Serif', serif; font-size: 21px; font-weight: 400; }
-  .assess-title span { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); display: block; margin-bottom: 3px; }
-  .session-info { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); text-align: right; line-height: 1.8; }
+      /* BUTTONS */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 22px;
+        border-radius: 8px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition: all 0.2s;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #3a7de8;
+      }
+      .btn-primary:disabled {
+        background: var(--border2);
+        color: var(--muted);
+        cursor: not-allowed;
+      }
+      .btn-secondary {
+        background: var(--bg3);
+        color: var(--text);
+        border: 1px solid var(--border2);
+      }
+      .btn-secondary:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .btn-success {
+        background: var(--accent2);
+        color: #0d1f18;
+      }
+      .btn-success:hover {
+        opacity: 0.9;
+      }
+      .btn-outline {
+        background: transparent;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+      .btn-outline:hover {
+        background: var(--accent);
+        color: #fff;
+      }
 
-  .img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
-  .img-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); overflow: hidden; }
-  .img-card-header { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
-  .img-tag { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; padding: 3px 10px; border-radius: 99px; }
-  .tag-a { background: #1e2535; color: var(--accent); }
-  .tag-b { background: #1e2a22; color: var(--accent2); }
-  .img-card-label { font-size: 13px; color: var(--muted); }
-  .img-container { position: relative; background: #000; min-height: 300px; display: flex; align-items: center; justify-content: center; }
-  .img-container img { width: 100%; max-height: 460px; object-fit: contain; display: block; }
-  .img-placeholder { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 50px 20px; color: var(--muted); font-size: 13px; text-align: center; }
-  .img-placeholder .icon { width: 46px; height: 46px; border: 1.5px dashed var(--border2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
-  .upload-btn { margin-top: 6px; padding: 7px 14px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); font-size: 13px; cursor: pointer; transition: all .2s; }
-  .upload-btn:hover { border-color: var(--accent); color: var(--accent); }
-  input[type="file"] { display: none; }
+      /* INFO CARDS */
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin: 20px 0;
+      }
+      .info-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+        padding: 14px 18px;
+      }
+      .info-card .label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+      .info-card .value {
+        font-size: 18px;
+        font-weight: 500;
+      }
+      .info-card .value small {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 400;
+      }
 
-  /* SCORING */
-  .scoring-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); padding: 22px; margin-bottom: 18px; }
-  .scoring-panel h3 { font-size: 12px; font-weight: 500; margin-bottom: 16px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: .06em; text-transform: uppercase; }
-  .score-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
-  .score-label { width: 80px; font-size: 13px; color: var(--muted); flex-shrink: 0; }
-  .score-options { display: flex; gap: 8px; flex: 1; }
-  .score-btn { flex: 1; padding: 10px 4px; border-radius: 8px; border: 1.5px solid var(--border2); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; transition: all .2s; text-align: center; line-height: 1.4; }
-  .score-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .score-btn.selected-1 { background: #2a1a1a; border-color: #e05050; color: #e05050; }
-  .score-btn.selected-2 { background: #2a2210; border-color: var(--warn); color: var(--warn); }
-  .score-btn.selected-3 { background: #1a2520; border-color: #60c080; color: #60c080; }
-  .score-btn.selected-4 { background: #1a2035; border-color: var(--accent); color: var(--accent); }
-  .score-desc { font-size: 10px; margin-top: 2px; }
+      /* SCALE TABLE */
+      .scale-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        font-size: 14px;
+      }
+      .scale-table th {
+        text-align: left;
+        padding: 8px 12px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .scale-table td {
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+      .scale-table tr:last-child td {
+        border-bottom: none;
+      }
+      .skor-badge {
+        width: 26px;
+        height: 26px;
+        border-radius: 6px;
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .s1 {
+        background: #2a1a1a;
+        color: #e05050;
+      }
+      .s2 {
+        background: #2a2210;
+        color: var(--warn);
+      }
+      .s3 {
+        background: #1a2520;
+        color: #60c080;
+      }
+      .s4 {
+        background: #1a2035;
+        color: var(--accent);
+      }
 
-  .catatan-group { margin-top: 14px; }
-  .catatan-group label { font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 5px; }
-  .catatan-group textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 10px 14px; outline: none; resize: vertical; min-height: 68px; transition: border-color .2s; }
-  .catatan-group textarea:focus { border-color: var(--accent); }
+      /* ASSESS */
+      .assess-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 22px;
+        gap: 16px;
+      }
+      .assess-title {
+        font-family: "Instrument Serif", serif;
+        font-size: 20px;
+        font-weight: 400;
+      }
+      .assess-title span {
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--accent);
+        display: block;
+        margin-bottom: 3px;
+      }
+      .session-info {
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+        line-height: 1.8;
+      }
+      .img-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .img-card {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+        overflow: hidden;
+      }
+      .img-card-header {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .img-tag {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 99px;
+      }
+      .tag-a {
+        background: #1e2535;
+        color: var(--accent);
+      }
+      .tag-b {
+        background: #1e2a22;
+        color: var(--accent2);
+      }
+      .img-card-label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .img-container {
+        background: #000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 280px;
+      }
+      .img-container img {
+        width: 100%;
+        max-height: 460px;
+        object-fit: contain;
+        display: block;
+      }
+      .img-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 50px 20px;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+      .img-placeholder .icon {
+        width: 44px;
+        height: 44px;
+        border: 1.5px dashed var(--border2);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+      }
+      .upload-btn {
+        margin-top: 6px;
+        padding: 7px 14px;
+        background: var(--bg3);
+        border: 1px solid var(--border2);
+        border-radius: 6px;
+        color: var(--text);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .upload-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      input[type="file"] {
+        display: none;
+      }
 
-  .nav-buttons { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-  .nav-center { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+      /* SCORING */
+      .scoring-panel {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .scoring-panel h3 {
+        font-size: 11px;
+        font-weight: 500;
+        margin-bottom: 14px;
+        color: var(--muted);
+        font-family: "DM Mono", monospace;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .score-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .score-label {
+        width: 78px;
+        font-size: 13px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .score-options {
+        display: flex;
+        gap: 7px;
+        flex: 1;
+      }
+      .score-btn {
+        flex: 1;
+        padding: 9px 4px;
+        border-radius: 8px;
+        border: 1.5px solid var(--border2);
+        background: transparent;
+        color: var(--muted);
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        line-height: 1.4;
+      }
+      .score-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .score-btn.selected-1 {
+        background: #2a1a1a;
+        border-color: #e05050;
+        color: #e05050;
+      }
+      .score-btn.selected-2 {
+        background: #2a2210;
+        border-color: var(--warn);
+        color: var(--warn);
+      }
+      .score-btn.selected-3 {
+        background: #1a2520;
+        border-color: #60c080;
+        color: #60c080;
+      }
+      .score-btn.selected-4 {
+        background: #1a2035;
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .score-desc {
+        font-size: 10px;
+        margin-top: 2px;
+      }
+      .catatan-group {
+        margin-top: 12px;
+      }
+      .catatan-group label {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        display: block;
+        margin-bottom: 5px;
+      }
+      .catatan-group textarea {
+        width: 100%;
+        background: var(--bg3);
+        border: 1px solid var(--border2);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: "DM Sans", sans-serif;
+        font-size: 14px;
+        padding: 10px 14px;
+        outline: none;
+        resize: vertical;
+        min-height: 64px;
+        transition: border-color 0.2s;
+      }
+      .catatan-group textarea:focus {
+        border-color: var(--accent);
+      }
+      .nav-buttons {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .nav-center {
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--muted);
+      }
 
-  /* DONE */
-  #screen-done { max-width: 600px; margin: 72px auto; padding: 0 24px; text-align: center; }
-  .done-icon { width: 68px; height: 68px; border: 2px solid var(--accent2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 24px; }
-  #screen-done h2 { font-family: 'Instrument Serif', serif; font-size: 30px; font-weight: 400; margin-bottom: 10px; }
-  #screen-done p { color: var(--muted); margin-bottom: 8px; }
-  .result-summary { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); padding: 18px; margin: 24px 0; text-align: left; }
-  .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
-  .result-row:last-child { border-bottom: none; }
-  .result-row .key { color: var(--muted); }
-  .result-row .val { font-family: 'DM Mono', monospace; color: var(--accent2); }
-  .done-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      /* DONE */
+      .done-icon {
+        width: 66px;
+        height: 66px;
+        border: 2px solid var(--accent2);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        margin: 0 auto 22px;
+      }
+      .result-summary {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+        padding: 18px;
+        margin: 22px 0;
+        text-align: left;
+      }
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 7px 0;
+        border-bottom: 1px solid var(--border);
+        font-size: 14px;
+      }
+      .result-row:last-child {
+        border-bottom: none;
+      }
+      .result-row .key {
+        color: var(--muted);
+      }
+      .result-row .val {
+        font-family: "DM Mono", monospace;
+        color: var(--accent2);
+      }
+      .done-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
 
-  /* LOADING OVERLAY */
-  .overlay {
-    position: fixed; inset: 0;
-    background: rgba(13,15,18,.85);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 16px;
-    z-index: 999;
-    display: none;
-  }
-  .overlay.show { display: flex; }
-  .spinner {
-    width: 40px; height: 40px;
-    border: 3px solid var(--border2);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin .8s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .overlay p { color: var(--muted); font-size: 14px; font-family: 'DM Mono', monospace; }
+      /* LOADING */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(13, 15, 18, 0.88);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 999;
+      }
+      .overlay.show {
+        display: flex;
+      }
+      .spinner {
+        width: 38px;
+        height: 38px;
+        border: 3px solid var(--border2);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .overlay p {
+        color: var(--muted);
+        font-size: 14px;
+        font-family: "DM Mono", monospace;
+      }
 
-  /* NOTIFICATION */
-  .notif { position: fixed; bottom: 22px; right: 22px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 18px; font-size: 14px; color: var(--text); transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 998; max-width: 280px; }
-  .notif.show { transform: translateY(0); opacity: 1; }
-  .notif.ok { border-color: var(--accent2); }
-  .notif.err { border-color: #e05050; }
+      /* NOTIF */
+      .notif {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--bg3);
+        border: 1px solid var(--border2);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 14px;
+        color: var(--text);
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all 0.3s;
+        z-index: 998;
+        max-width: 280px;
+      }
+      .notif.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .notif.ok {
+        border-color: var(--accent2);
+      }
+      .notif.err {
+        border-color: #e05050;
+      }
 
-  /* STATUS BADGE */
-  .status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    padding: 4px 10px; border-radius: 99px;
-    margin-left: auto;
-  }
-  .status-online { background: #1a2520; color: var(--accent2); border: 1px solid #2d4a3a; }
-  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+      /* PSP SIGNATURE */
+      .psp-header {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+        padding: 20px 24px;
+        margin-bottom: 20px;
+      }
+      .psp-header h3 {
+        font-family: "Instrument Serif", serif;
+        font-size: 18px;
+        font-weight: 400;
+        margin-bottom: 8px;
+      }
+      .psp-header p {
+        font-size: 13px;
+        color: var(--muted);
+        line-height: 1.7;
+      }
+      .psp-statement {
+        background: var(--bg3);
+        border-left: 3px solid var(--accent);
+        padding: 14px 18px;
+        border-radius: 0 8px 8px 0;
+        margin: 16px 0;
+        font-size: 14px;
+        color: #c8cad4;
+        line-height: 1.7;
+      }
+      .signature-area {
+        margin-top: 24px;
+        padding: 20px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: var(--card-r);
+      }
+      .signature-area p {
+        font-size: 13px;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      .sig-row {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .sig-box {
+        text-align: center;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .sig-line {
+        width: 200px;
+        border-bottom: 1px solid var(--border2);
+        margin: 48px auto 8px;
+      }
 
-  @media (max-width: 680px) {
-    .img-grid { grid-template-columns: 1fr; }
-    .info-grid { grid-template-columns: 1fr; }
-    .score-options { flex-wrap: wrap; }
-    .score-btn { min-width: 44%; }
-    header h1 { font-size: 14px; }
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo-mark">VGA</div>
-  <h1>Visual Grading Analysis <span>— Citra Radiografi Abdomen</span></h1>
-  <div class="progress-wrap">
-    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
-    <span id="progress-label">0 / 0</span>
-    <span class="status-badge status-online"><span class="status-dot"></span>Google Sheets</span>
-  </div>
-</header>
-
-<!-- LOADING OVERLAY -->
-<div class="overlay" id="overlay">
-  <div class="spinner"></div>
-  <p id="overlay-msg">Menyimpan data ke Google Sheets...</p>
-</div>
-
-<!-- ══ SCREEN INTRO ══ -->
-<div id="screen-intro" class="screen active">
-  <div class="intro-badge">Penelitian KTI — D3 Radiologi</div>
-  <h2>Penilaian Kualitas<br><em>Kontras Citra</em> Radiografi</h2>
-  <p>Sistem penilaian Visual Grading Analysis (VGA) untuk membandingkan kualitas kontras citra radiografi abdomen phantom sebelum dan sesudah enhancement dengan metode CLAHE.</p>
-  <p>Setiap sesi menampilkan <strong>2 gambar berdampingan</strong> untuk dinilai kontrasnya menggunakan skala 1–4. Hasil otomatis tersimpan ke Google Sheets peneliti.</p>
-
-  <div class="info-grid">
-    <div class="info-card">
-      <div class="label">Jumlah sesi</div>
-      <div class="value">10 <small>gambar</small></div>
-    </div>
-    <div class="info-card">
-      <div class="label">Skala penilaian</div>
-      <div class="value">1 – 4 <small>skor</small></div>
-    </div>
-    <div class="info-card">
-      <div class="label">Estimasi waktu</div>
-      <div class="value">15 – 20 <small>menit</small></div>
-    </div>
-    <div class="info-card">
-      <div class="label">Penyimpanan</div>
-      <div class="value" style="font-size:14px">Google Sheets ✓</div>
-    </div>
-  </div>
-
-  <table class="scale-table">
-    <thead><tr><th>Skor</th><th>Kategori</th><th>Deskripsi</th></tr></thead>
-    <tbody>
-      <tr><td><div class="skor-badge s1">1</div></td><td>Tidak memadai</td><td>Batas struktur tidak dapat dibedakan sama sekali</td></tr>
-      <tr><td><div class="skor-badge s2">2</div></td><td>Kurang</td><td>Batas struktur sulit dibedakan, detail tidak jelas</td></tr>
-      <tr><td><div class="skor-badge s3">3</div></td><td>Cukup</td><td>Batas struktur dapat dibedakan dengan cukup jelas</td></tr>
-      <tr><td><div class="skor-badge s4">4</div></td><td>Baik</td><td>Batas struktur jelas, tegas, dan mudah dibedakan</td></tr>
-    </tbody>
-  </table>
-
-  <hr class="divider">
-  <h3 style="margin-bottom:14px;font-size:15px;font-weight:500">Data Penilai</h3>
-  <div class="form-group">
-    <label>Nama lengkap</label>
-    <input type="text" id="inp-nama" placeholder="Masukkan nama lengkap penilai">
-  </div>
-  <div class="form-group">
-    <label>Jabatan / Profesi</label>
-    <select id="inp-jabatan">
-      <option value="">— Pilih jabatan —</option>
-      <option>Radiografer</option>
-      <option>Radiografer Senior</option>
-      <option>Dokter Spesialis Radiologi</option>
-      <option>Dokter Umum</option>
-      <option>Lainnya</option>
-    </select>
-  </div>
-  <div class="form-group">
-    <label>Pengalaman kerja</label>
-    <select id="inp-pengalaman">
-      <option value="">— Pilih pengalaman —</option>
-      <option>< 1 tahun</option>
-      <option>1 – 3 tahun</option>
-      <option>3 – 5 tahun</option>
-      <option>5 – 10 tahun</option>
-      <option>> 10 tahun</option>
-    </select>
-  </div>
-  <div class="form-group">
-    <label>Kode sesi (dari peneliti)</label>
-    <input type="text" id="inp-kode" placeholder="Contoh: PENILAI-01">
-  </div>
-  <br>
-  <button class="btn btn-primary" onclick="mulaiPenilaian()">Mulai Penilaian →</button>
-</div>
-
-<!-- ══ SCREEN ASSESS ══ -->
-<div id="screen-assess" class="screen">
-  <div class="assess-header">
-    <div class="assess-title">
-      <span id="sesi-label">Sesi 1 dari 10</span>
-      Perbandingan Gambar A vs Gambar B
-    </div>
-    <div class="session-info" id="session-info-text"></div>
-  </div>
-
-  <div class="img-grid">
-    <div class="img-card">
-      <div class="img-card-header">
-        <span class="img-tag tag-a">Gambar A</span>
-        <span class="img-card-label">Citra referensi</span>
+      @media (max-width: 680px) {
+        .img-grid {
+          grid-template-columns: 1fr;
+        }
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+        .score-options {
+          flex-wrap: wrap;
+        }
+        .score-btn {
+          min-width: 44%;
+        }
+        header h1 {
+          font-size: 13px;
+        }
+        .step-label {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="logo-mark">VGA</div>
+      <h1>Visual Grading Analysis <span>— Citra Radiografi Abdomen</span></h1>
+      <div class="hdr-right">
+        <div class="progress-bar">
+          <div class="progress-fill" id="prog-fill" style="width: 0%"></div>
+        </div>
+        <span id="progress-label">—</span>
+        <span class="status-badge"
+          ><span class="status-dot"></span>Google Sheets</span
+        >
       </div>
-      <div class="img-container" id="container-a"></div>
+    </header>
+
+    <div class="overlay" id="overlay">
+      <div class="spinner"></div>
+      <p id="overlay-msg">Menyimpan data...</p>
     </div>
-    <div class="img-card">
-      <div class="img-card-header">
-        <span class="img-tag tag-b">Gambar B</span>
-        <span class="img-card-label">Citra hasil CLAHE</span>
+
+    <!-- ══════════════════════════════════════
+     SCREEN 1 — NASKAH PENJELASAN
+══════════════════════════════════════ -->
+    <div id="screen-naskah" class="screen active">
+      <div class="page-wrap">
+        <div class="badge">Langkah 1 dari 3 — Informasi Penelitian</div>
+        <h2 class="page-title">Naskah <em>Penjelasan</em><br />Penelitian</h2>
+        <p class="page-subtitle">
+          Mohon baca seluruh penjelasan berikut sebelum melanjutkan ke formulir
+          persetujuan.
+        </p>
+
+        <!-- Step indicator -->
+        <div class="step-indicator">
+          <div class="step active">
+            <div class="step-num">1</div>
+            <span class="step-label">Penjelasan</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step pending">
+            <div class="step-num">2</div>
+            <span class="step-label">Persetujuan</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step pending">
+            <div class="step-num">3</div>
+            <span class="step-label">Penilaian</span>
+          </div>
+        </div>
+
+        <div class="naskah-box">
+          <h3>Naskah Penjelasan</h3>
+          <p>
+            Saya, <strong>Filar Abdullah (P21140221017)</strong>, seorang
+            mahasiswa Politeknik Kesehatan Kementerian Kesehatan Jakarta II,
+            Jurusan Teknik Radiodiagnostik dan Radioterapi.
+          </p>
+          <p>
+            Sebagai upaya dalam pengumpulan data dalam rangka penelitian
+            mengenai
+            <em
+              >Analisis Kualitas Citra Digital Radiography (DR) Abdomen dengan
+              Metode Contrast Limited Adaptive Histogram Equalization (CLAHE)
+              Menggunakan Studi Phantom</em
+            >, memohon kesediaan Bapak/Ibu/Saudara/i untuk berpartisipasi dalam
+            kuesioner sebagai responden informasi.
+          </p>
+          <p>
+            Tujuan dari penelitian ini untuk menilai dan menganalisis citra
+            radiografi <em>abdomen</em> sebelum dan sesudah dilakukannya proses
+            peningkatan <em>(enhancement)</em> melalui metode
+            <em>Contrast Limited Adaptive Histogram Equalization (CLAHE)</em>.
+          </p>
+          <p>
+            <strong
+              >Data yang akan saya kumpulkan adalah sebagai berikut:</strong
+            >
+          </p>
+          <ul>
+            <li>Data Identitas Umum Responden</li>
+            <li>Data Pendapat Responden</li>
+            <li>Data Hasil Kuesioner</li>
+          </ul>
+          <p>
+            Partisipan sebagai responden bersifat
+            <strong>sukarela tanpa paksaan apa pun</strong> dan apabila tidak
+            berkenan dapat menolak atau dapat mengundurkan diri tanpa sanksi apa
+            pun.
+          </p>
+          <p>
+            Manfaat yang akan responden dapatkan adalah pertimbangan solusi
+            dalam meningkatkan kualitas citra radiografi <em>abdomen</em> untuk
+            meminimalkan pengulangan dalam pengambilan citra apabila terdapat
+            hasil citra yang tidak memenuhi kriteria minimal kelayakan suatu
+            citra radiografi melalui metode peningkatan
+            <em
+              >Enhancement Contrast Limited Adaptive Histogram Equalization
+              (CLAHE)</em
+            >.
+          </p>
+          <p>
+            Data yang diperoleh, akan dijaga kerahasiaannya apabila berhubungan
+            dengan data pribadi identitas responden yang bersangkutan. Jika
+            memiliki ketersediaan dalam berpartisipasi, diharapkan untuk mengisi
+            dan menyetujui
+            <strong>Persetujuan Setelah Penjelasan (PSP)</strong> yang akan
+            ditampilkan.
+          </p>
+          <p>
+            Apabila responden memiliki pertanyaan dan hal yang ingin disampaikan
+            lebih lanjut mengenai penelitian ini, silakan menghubungi:
+          </p>
+          <div class="contact-box">
+            <span>Nama</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:
+            <strong>Filar Abdullah</strong><br />
+            <span>HP</span
+            >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:
+            <strong>+6285697448646</strong><br />
+            <span>Email</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:
+            <strong>filar948@gmail.com</strong>
+          </div>
+          <p>
+            Atas perhatian, partisipasi, dan kerja samanya, saya ucapkan terima
+            kasih.
+          </p>
+        </div>
+
+        <button class="btn btn-primary" onclick="keHalamanPSP()">
+          Saya Telah Membaca — Lanjut ke Persetujuan →
+        </button>
       </div>
-      <div class="img-container" id="container-b"></div>
     </div>
-  </div>
 
-  <div class="scoring-panel">
-    <h3>Berikan Skor Kontras (1 = Tidak Memadai · 4 = Baik)</h3>
-    <div class="score-row">
-      <div class="score-label">Gambar A</div>
-      <div class="score-options" id="scores-a"></div>
+    <!-- ══════════════════════════════════════
+     SCREEN 2 — PSP
+══════════════════════════════════════ -->
+    <div id="screen-psp" class="screen">
+      <div class="page-wrap">
+        <div class="badge">Langkah 2 dari 3 — Persetujuan</div>
+        <h2 class="page-title">
+          <em>Persetujuan</em> Setelah<br />Penjelasan (PSP)
+        </h2>
+        <p class="page-subtitle">
+          Isi data diri dan berikan persetujuan di bawah ini sebelum memulai
+          penilaian.
+        </p>
+
+        <div class="step-indicator">
+          <div class="step done">
+            <div class="step-num">✓</div>
+            <span class="step-label">Penjelasan</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step active">
+            <div class="step-num">2</div>
+            <span class="step-label">Persetujuan</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step pending">
+            <div class="step-num">3</div>
+            <span class="step-label">Penilaian</span>
+          </div>
+        </div>
+
+        <div class="psp-header">
+          <h3>Data Diri Responden</h3>
+          <p>
+            Yang melakukan pengisian di bawah ini telah mendapat penjelasan
+            secara detail dan terperinci serta telah mempelajari dan memahami
+            mengenai hal yang berkaitan dengan penelitian yang dilaksanakan oleh
+            Filar Abdullah.
+          </p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama Lengkap *</label>
+            <input
+              type="text"
+              id="psp-nama"
+              placeholder="Masukkan nama lengkap"
+            />
+          </div>
+          <div class="form-group">
+            <label>Usia *</label>
+            <input
+              type="number"
+              id="psp-usia"
+              placeholder="Contoh: 35"
+              min="18"
+              max="70"
+            />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Pekerjaan / Jabatan *</label>
+            <select id="psp-jabatan">
+              <option value="">— Pilih jabatan —</option>
+              <option>Radiografer</option>
+              <option>Radiografer Senior</option>
+              <option>Dokter Spesialis Radiologi</option>
+              <option>Dokter Umum</option>
+              <option>Lainnya</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Pengalaman Kerja *</label>
+            <select id="psp-pengalaman">
+              <option value="">— Pilih pengalaman —</option>
+              <option>< 1 tahun</option>
+              <option>1 – 3 tahun</option>
+              <option>3 – 5 tahun</option>
+              <option>5 – 10 tahun</option>
+              <option>> 10 tahun</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email *</label>
+          <input
+            type="email"
+            id="psp-email"
+            placeholder="Contoh: nama@email.com"
+          />
+        </div>
+        <div class="form-group">
+          <label>Kode Sesi (dari peneliti)</label>
+          <input type="text" id="psp-kode" placeholder="Contoh: PENILAI-01" />
+        </div>
+
+        <div class="psp-statement">
+          Telah mendapat penjelasan secara detail dan terperinci serta telah
+          mempelajari dan memahami mengenai hal yang berkaitan dengan
+          <strong
+            >Analisis Kualitas Citra Digital Radiography (DR) Abdomen dengan
+            Metode Contrast Limited Adaptive Histogram Equalization (CLAHE)
+            Menggunakan Studi Phantom</strong
+          >
+          yang dilaksanakan oleh Filar Abdullah.
+        </div>
+
+        <hr class="divider" />
+        <p
+          style="
+            font-size: 13px;
+            color: var(--muted);
+            margin-bottom: 10px;
+            font-family: &quot;DM Mono&quot;, monospace;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+          "
+        >
+          Pernyataan Persetujuan
+        </p>
+
+        <!-- Petunjuk -->
+        <div class="centang-hint">
+          <span class="hint-icon">☐</span>
+          Klik pada setiap kotak di bawah untuk memberikan centang persetujuan
+          Anda
+        </div>
+
+        <!-- Checkbox 1 -->
+        <div class="checkbox-group" id="cb1-wrap" onclick="toggleCheck('cb1')">
+          <input type="checkbox" id="cb1" />
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+              flex-shrink: 0;
+            "
+          >
+            <div class="custom-check" id="cb1-icon">✓</div>
+            <span
+              style="
+                font-family: &quot;DM Mono&quot;, monospace;
+                font-size: 9px;
+                color: var(--muted);
+              "
+              >1/3</span
+            >
+          </div>
+          <div class="check-text">
+            <div class="check-number">Pernyataan 1</div>
+            <strong
+              >Saya menyetujui untuk berpartisipasi dalam penelitian ini secara
+              sukarela</strong
+            >, mengisi data yang diperlukan secara jujur dan transparan. Bila
+            saya inginkan, sewaktu-waktu saya dapat mengundurkan diri tanpa
+            paksaan apa pun.
+          </div>
+        </div>
+
+        <!-- Checkbox 2 -->
+        <div class="checkbox-group" id="cb2-wrap" onclick="toggleCheck('cb2')">
+          <input type="checkbox" id="cb2" />
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+              flex-shrink: 0;
+            "
+          >
+            <div class="custom-check" id="cb2-icon">✓</div>
+            <span
+              style="
+                font-family: &quot;DM Mono&quot;, monospace;
+                font-size: 9px;
+                color: var(--muted);
+              "
+              >2/3</span
+            >
+          </div>
+          <div class="check-text">
+            <div class="check-number">Pernyataan 2</div>
+            <strong
+              >Saya memahami bahwa data identitas saya akan dijaga
+              kerahasiaannya</strong
+            >
+            dan hanya digunakan untuk keperluan penelitian ini.
+          </div>
+        </div>
+
+        <!-- Checkbox 3 -->
+        <div class="checkbox-group" id="cb3-wrap" onclick="toggleCheck('cb3')">
+          <input type="checkbox" id="cb3" />
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+              flex-shrink: 0;
+            "
+          >
+            <div class="custom-check" id="cb3-icon">✓</div>
+            <span
+              style="
+                font-family: &quot;DM Mono&quot;, monospace;
+                font-size: 9px;
+                color: var(--muted);
+              "
+              >3/3</span
+            >
+          </div>
+          <div class="check-text">
+            <div class="check-number">Pernyataan 3</div>
+            <strong
+              >Dengan demikian pernyataan ini dibuat sebenarnya tanpa
+              paksaan</strong
+            >
+            dari pihak mana pun.
+          </div>
+        </div>
+
+        <!-- Status centang -->
+        <div
+          id="check-status"
+          style="
+            font-family: &quot;DM Mono&quot;, monospace;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 4px;
+            text-align: right;
+          "
+        >
+          0 dari 3 pernyataan disetujui
+        </div>
+
+        <div class="signature-area">
+          <p>
+            Dengan mengklik tombol
+            <strong>"Setuju & Mulai Penilaian"</strong> di bawah ini, saya
+            menyatakan bahwa persetujuan ini dibuat dengan penuh kesadaran dan
+            tanpa paksaan dari pihak mana pun.
+          </p>
+          <div class="sig-row">
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <div
+                id="sig-nama-label"
+                style="color: var(--text); font-size: 13px"
+              >
+                ( Tanda Tangan Digital )
+              </div>
+              <div
+                style="font-size: 12px; color: var(--muted); margin-top: 4px"
+                id="sig-tanggal"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <br />
+        <div style="display: flex; gap: 12px; align-items: center">
+          <button
+            class="btn btn-secondary"
+            onclick="showScreen('screen-naskah')"
+          >
+            ← Kembali
+          </button>
+          <button
+            class="btn btn-primary"
+            id="btn-setuju"
+            onclick="setujuPSP()"
+            disabled
+          >
+            Setuju & Mulai Penilaian →
+          </button>
+        </div>
+      </div>
     </div>
-    <div class="score-row">
-      <div class="score-label">Gambar B</div>
-      <div class="score-options" id="scores-b"></div>
+
+    <!-- ══════════════════════════════════════
+     SCREEN 3 — PANDUAN PENILAIAN
+══════════════════════════════════════ -->
+    <div id="screen-panduan" class="screen">
+      <div class="page-wrap">
+        <div class="badge">Langkah 3 — Panduan Penilaian</div>
+        <h2 class="page-title">
+          Panduan <em>Penilaian</em><br />Visual Grading
+        </h2>
+        <p class="page-subtitle">
+          Baca panduan berikut sebelum memulai sesi penilaian gambar.
+        </p>
+
+        <div class="step-indicator">
+          <div class="step done">
+            <div class="step-num">✓</div>
+            <span class="step-label">Penjelasan</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step done">
+            <div class="step-num">✓</div>
+            <span class="step-label">Persetujuan</span>
+          </div>
+          <div class="step-line"></div>
+          <div class="step active">
+            <div class="step-num">3</div>
+            <span class="step-label">Penilaian</span>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="label">Jumlah sesi</div>
+            <div class="value">10 <small>gambar</small></div>
+          </div>
+          <div class="info-card">
+            <div class="label">Skala penilaian</div>
+            <div class="value">1 – 4 <small>skor</small></div>
+          </div>
+          <div class="info-card">
+            <div class="label">Estimasi waktu</div>
+            <div class="value">15 – 20 <small>menit</small></div>
+          </div>
+          <div class="info-card">
+            <div class="label">Penyimpanan</div>
+            <div class="value" style="font-size: 14px">Otomatis ✓</div>
+          </div>
+        </div>
+
+        <table class="scale-table">
+          <thead>
+            <tr>
+              <th>Skor</th>
+              <th>Kategori</th>
+              <th>Deskripsi</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="skor-badge s1">1</div></td>
+              <td>Tidak memadai</td>
+              <td>Batas struktur tidak dapat dibedakan sama sekali</td>
+            </tr>
+            <tr>
+              <td><div class="skor-badge s2">2</div></td>
+              <td>Kurang</td>
+              <td>Batas struktur sulit dibedakan, detail tidak jelas</td>
+            </tr>
+            <tr>
+              <td><div class="skor-badge s3">3</div></td>
+              <td>Cukup</td>
+              <td>Batas struktur dapat dibedakan dengan cukup jelas</td>
+            </tr>
+            <tr>
+              <td><div class="skor-badge s4">4</div></td>
+              <td>Baik</td>
+              <td>Batas struktur jelas, tegas, dan mudah dibedakan</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div
+          style="
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--card-r);
+            padding: 18px 20px;
+            margin-top: 16px;
+            font-size: 14px;
+            color: #c8cad4;
+            line-height: 1.8;
+          "
+        >
+          <p style="margin-bottom: 8px">
+            <strong style="color: var(--text)">Petunjuk pengisian:</strong>
+          </p>
+          <p>
+            • Setiap sesi menampilkan <strong>Gambar A</strong> (referensi) dan
+            <strong>Gambar B</strong> berdampingan.
+          </p>
+          <p>
+            • Nilai kontras masing-masing gambar secara
+            <strong>independen</strong> menggunakan skala 1–4.
+          </p>
+          <p>
+            • Fokus pada <strong>kejelasan batas struktur</strong> dan kemudahan
+            membedakan jaringan.
+          </p>
+          <p>
+            • Anda dapat menambahkan catatan observasi pada kolom yang tersedia.
+          </p>
+          <p>
+            • Klik <strong>"Selanjutnya"</strong> setelah memberikan skor untuk
+            kedua gambar.
+          </p>
+        </div>
+
+        <br />
+        <button class="btn btn-primary" onclick="mulaiSesi()">
+          Mulai Penilaian →
+        </button>
+      </div>
     </div>
-    <div class="catatan-group">
-      <label>Catatan (opsional)</label>
-      <textarea id="catatan-input" placeholder="Tuliskan catatan atau observasi tambahan jika ada..."></textarea>
+
+    <!-- ══════════════════════════════════════
+     SCREEN 4 — ASSESS
+══════════════════════════════════════ -->
+    <div id="screen-assess" class="screen">
+      <div class="page-wrap-wide">
+        <div class="assess-header">
+          <div class="assess-title">
+            <span id="sesi-label">Sesi 1 dari 10</span>
+            Perbandingan Gambar A vs Gambar B
+          </div>
+          <div class="session-info" id="session-info-text"></div>
+        </div>
+
+        <div class="img-grid">
+          <div class="img-card">
+            <div class="img-card-header">
+              <span class="img-tag tag-a">Gambar A</span
+              ><span class="img-card-label">Citra referensi</span>
+            </div>
+            <div class="img-container" id="container-a"></div>
+          </div>
+          <div class="img-card">
+            <div class="img-card-header">
+              <span class="img-tag tag-b">Gambar B</span
+              ><span class="img-card-label">Citra hasil CLAHE</span>
+            </div>
+            <div class="img-container" id="container-b"></div>
+          </div>
+        </div>
+
+        <div class="scoring-panel">
+          <h3>Berikan Skor Kontras (1 = Tidak Memadai · 4 = Baik)</h3>
+          <div class="score-row">
+            <div class="score-label">Gambar A</div>
+            <div class="score-options" id="scores-a"></div>
+          </div>
+          <div class="score-row">
+            <div class="score-label">Gambar B</div>
+            <div class="score-options" id="scores-b"></div>
+          </div>
+          <div class="catatan-group">
+            <label>Catatan (opsional)</label>
+            <textarea
+              id="catatan-input"
+              placeholder="Tuliskan catatan atau observasi tambahan jika ada..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div class="nav-buttons">
+          <button class="btn btn-secondary" id="btn-prev" onclick="prevSesi()">
+            ← Sebelumnya
+          </button>
+          <span class="nav-center" id="nav-center-label"></span>
+          <button class="btn btn-primary" id="btn-next" onclick="nextSesi()">
+            Selanjutnya →
+          </button>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <div class="nav-buttons">
-    <button class="btn btn-secondary" onclick="prevSesi()" id="btn-prev">← Sebelumnya</button>
-    <span class="nav-center" id="nav-center-label"></span>
-    <button class="btn btn-primary" onclick="nextSesi()" id="btn-next">Selanjutnya →</button>
-  </div>
-</div>
+    <!-- ══════════════════════════════════════
+     SCREEN 5 — DONE
+══════════════════════════════════════ -->
+    <div id="screen-done" class="screen">
+      <div class="page-wrap" style="text-align: center">
+        <div class="done-icon">✓</div>
+        <h2 class="page-title" style="font-size: 28px">
+          Penilaian <em>Selesai</em>
+        </h2>
+        <p style="color: var(--muted); margin-bottom: 6px">
+          Terima kasih atas partisipasi Anda dalam penelitian ini.
+        </p>
+        <p style="color: var(--muted)">
+          Seluruh hasil telah
+          <strong style="color: var(--text)">tersimpan otomatis</strong> ke
+          Google Sheets peneliti.
+        </p>
+        <div class="result-summary" id="result-summary"></div>
+        <div class="done-buttons">
+          <button class="btn btn-success" onclick="unduhCSV()">
+            ⬇ Unduh Hasil CSV
+          </button>
+          <button class="btn btn-secondary" onclick="location.reload()">
+            Selesai
+          </button>
+        </div>
+      </div>
+    </div>
 
-<!-- ══ SCREEN DONE ══ -->
-<div id="screen-done" class="screen">
-  <div class="done-icon">✓</div>
-  <h2>Penilaian Selesai</h2>
-  <p>Terima kasih atas partisipasi Anda dalam penelitian ini.</p>
-  <p>Seluruh hasil penilaian telah <strong>tersimpan otomatis</strong> ke Google Sheets peneliti.</p>
-  <div class="result-summary" id="result-summary"></div>
-  <div class="done-buttons">
-    <button class="btn btn-success" onclick="unduhCSV()">⬇ Unduh Hasil CSV</button>
-    <button class="btn btn-secondary" onclick="location.reload()">Penilaian Baru</button>
-  </div>
-</div>
+    <div class="notif" id="notif"></div>
 
-<div class="notif" id="notif"></div>
+    <script>
+      // ══════════════════════════════════════════
+      // KONFIGURASI
+      // ══════════════════════════════════════════
+      const APPS_SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbzdiMGS-HL_5llHIwAxp_2Do1oufheoYveSKxvzCYn9YZ1_v1u-9D8AzoQmDttHoP6HdQ/exec";
+      const TOTAL_SESI = 10;
 
-<script>
-// ══════════════════════════════════════════
-// KONFIGURASI — Google Sheets Apps Script URL
-// ══════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdiMGS-HL_5llHIwAxp_2Do1oufheoYveSKxvzCYn9YZ1_v1u-9D8AzoQmDttHoP6HdQ/exec';
-const TOTAL_SESI = 10;
+      // ══════════════════════════════════════════
+      // STATE
+      // ══════════════════════════════════════════
+      let state = {
+        psp: {},
+        sesiAktif: 0,
+        skor: [],
+        checks: { cb1: false, cb2: false, cb3: false },
+      };
 
-// ══════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════
-let state = {
-  penilai: {},
-  sesiAktif: 0,
-  skor: [],
-};
+      // ══════════════════════════════════════════
+      // UI HELPERS
+      // ══════════════════════════════════════════
+      function showScreen(id) {
+        document
+          .querySelectorAll(".screen")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        window.scrollTo(0, 0);
+      }
 
-// ══════════════════════════════════════════
-// UI HELPERS
-// ══════════════════════════════════════════
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+      function notif(msg, type = "ok") {
+        const el = document.getElementById("notif");
+        el.textContent = msg;
+        el.className = "notif show " + type;
+        setTimeout(() => el.classList.remove("show"), 3500);
+      }
 
-function notif(msg, type = 'ok') {
-  const el = document.getElementById('notif');
-  el.textContent = msg;
-  el.className = 'notif show ' + type;
-  setTimeout(() => el.classList.remove('show'), 3500);
-}
+      function showLoading(msg) {
+        document.getElementById("overlay-msg").textContent = msg;
+        document.getElementById("overlay").classList.add("show");
+      }
+      function hideLoading() {
+        document.getElementById("overlay").classList.remove("show");
+      }
 
-function showLoading(msg = 'Menyimpan data ke Google Sheets...') {
-  document.getElementById('overlay-msg').textContent = msg;
-  document.getElementById('overlay').classList.add('show');
-}
+      function updateProgress(current, total) {
+        const pct = ((current / total) * 100).toFixed(0);
+        document.getElementById("prog-fill").style.width = pct + "%";
+        document.getElementById("progress-label").textContent =
+          current + " / " + total;
+      }
 
-function hideLoading() {
-  document.getElementById('overlay').classList.remove('show');
-}
+      // ══════════════════════════════════════════
+      // NASKAH → PSP
+      // ══════════════════════════════════════════
+      function keHalamanPSP() {
+        document.getElementById("sig-tanggal").textContent =
+          new Date().toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+        showScreen("screen-psp");
+      }
 
-// ══════════════════════════════════════════
-// MULAI PENILAIAN
-// ══════════════════════════════════════════
-function mulaiPenilaian() {
-  const nama = document.getElementById('inp-nama').value.trim();
-  const jabatan = document.getElementById('inp-jabatan').value;
-  const pengalaman = document.getElementById('inp-pengalaman').value;
-  const kode = document.getElementById('inp-kode').value.trim();
+      // ══════════════════════════════════════════
+      // CHECKBOX PSP
+      // ══════════════════════════════════════════
+      function toggleCheck(id) {
+        state.checks[id] = !state.checks[id];
+        const wrap = document.getElementById(id + "-wrap");
+        const icon = document.getElementById(id + "-icon");
 
-  if (!nama) { notif('Masukkan nama penilai terlebih dahulu.', 'err'); return; }
-  if (!jabatan) { notif('Pilih jabatan terlebih dahulu.', 'err'); return; }
-  if (!pengalaman) { notif('Pilih pengalaman kerja terlebih dahulu.', 'err'); return; }
+        if (state.checks[id]) {
+          wrap.classList.add("checked");
+          icon.textContent = "✓";
+          icon.style.color = "#0d1f18";
+        } else {
+          wrap.classList.remove("checked");
+          icon.textContent = "✓";
+          icon.style.color = "transparent";
+        }
+        cekSemuaCheck();
+      }
 
-  state.penilai = { nama, jabatan, pengalaman, kode, waktuMulai: new Date().toISOString() };
-  state.sesiAktif = 0;
-  state.skor = Array.from({ length: TOTAL_SESI }, () => ({
-    skorA: null, skorB: null, catatan: '', imgA: null, imgB: null
-  }));
+      function cekSemuaCheck() {
+        const jumlah = [
+          state.checks.cb1,
+          state.checks.cb2,
+          state.checks.cb3,
+        ].filter(Boolean).length;
+        const semua = jumlah === 3;
 
-  renderSesi();
-  showScreen('screen-assess');
-}
+        // Update status counter
+        const statusEl = document.getElementById("check-status");
+        if (statusEl) {
+          statusEl.textContent = jumlah + " dari 3 pernyataan disetujui";
+          statusEl.style.color = semua ? "var(--accent2)" : "var(--muted)";
+        }
 
-// ══════════════════════════════════════════
-// RENDER SESI
-// ══════════════════════════════════════════
-function renderSesi() {
-  const i = state.sesiAktif;
-  const pct = (i / TOTAL_SESI * 100).toFixed(0);
+        // Update tombol
+        const btn = document.getElementById("btn-setuju");
+        btn.disabled = !semua;
+        if (semua) {
+          btn.textContent = "Setuju & Mulai Penilaian →";
+        } else {
+          btn.textContent = "Centang semua pernyataan (" + jumlah + "/3)";
+        }
 
-  document.getElementById('prog-fill').style.width = pct + '%';
-  document.getElementById('progress-label').textContent = i + ' / ' + TOTAL_SESI;
-  document.getElementById('sesi-label').textContent = 'Sesi ' + (i + 1) + ' dari ' + TOTAL_SESI;
-  document.getElementById('session-info-text').innerHTML =
-    state.penilai.nama + '<br><span style="color:var(--muted)">' +
-    state.penilai.jabatan + ' · ' + new Date().toLocaleDateString('id') + '</span>';
-  document.getElementById('nav-center-label').textContent = (i + 1) + ' / ' + TOTAL_SESI;
+        // Update nama di signature
+        const nama = document.getElementById("psp-nama").value.trim();
+        if (nama) {
+          document.getElementById("sig-nama-label").textContent =
+            "( " + nama + " )";
+        }
+      }
 
-  document.getElementById('btn-prev').style.visibility = i === 0 ? 'hidden' : 'visible';
-  const isLast = i === TOTAL_SESI - 1;
-  const btnNext = document.getElementById('btn-next');
-  btnNext.textContent = isLast ? 'Selesai & Simpan ✓' : 'Selanjutnya →';
-  btnNext.className = isLast ? 'btn btn-success' : 'btn btn-primary';
+      // Update signature nama saat diketik
+      document.addEventListener("DOMContentLoaded", () => {
+        document
+          .getElementById("psp-nama")
+          .addEventListener("input", cekSemuaCheck);
+        // Init checkbox — tampilkan centang transparan (kotak kosong terlihat jelas)
+        ["cb1", "cb2", "cb3"].forEach((id) => {
+          const icon = document.getElementById(id + "-icon");
+          icon.textContent = "✓";
+          icon.style.color = "transparent";
+        });
+        // Init tombol
+        document.getElementById("btn-setuju").textContent =
+          "Centang semua pernyataan (0/3)";
+      });
 
-  const sesi = state.skor[i];
-  renderImg('a', sesi.imgA);
-  renderImg('b', sesi.imgB);
-  renderSkorButtons('a', sesi.skorA);
-  renderSkorButtons('b', sesi.skorB);
-  document.getElementById('catatan-input').value = sesi.catatan || '';
-}
+      // ══════════════════════════════════════════
+      // PSP → PANDUAN
+      // ══════════════════════════════════════════
+      function setujuPSP() {
+        const nama = document.getElementById("psp-nama").value.trim();
+        const usia = document.getElementById("psp-usia").value.trim();
+        const jabatan = document.getElementById("psp-jabatan").value;
+        const pengalaman = document.getElementById("psp-pengalaman").value;
+        const email = document.getElementById("psp-email").value.trim();
+        const kode = document.getElementById("psp-kode").value.trim();
 
-function renderImg(side, src) {
-  const container = document.getElementById('container-' + side);
-  const label = side === 'a' ? 'Gambar A' : 'Gambar B';
-  const i = state.sesiAktif;
-  if (src) {
-    container.innerHTML = '<img src="' + src + '" alt="' + label + '">';
-  } else {
-    container.innerHTML =
-      '<div class="img-placeholder">' +
-      '<div class="icon">🩻</div>' +
-      '<div>' + label + ' belum diunggah</div>' +
-      '<label class="upload-btn" for="up-' + side + '-' + i + '">Pilih ' + label + '</label>' +
-      '<input type="file" id="up-' + side + '-' + i + '" accept="image/*" onchange="loadImg(this,\'' + side + '\')">' +
-      '</div>';
-  }
-}
+        if (!nama) {
+          notif("Masukkan nama lengkap.", "err");
+          return;
+        }
+        if (!usia) {
+          notif("Masukkan usia.", "err");
+          return;
+        }
+        if (!jabatan) {
+          notif("Pilih jabatan.", "err");
+          return;
+        }
+        if (!pengalaman) {
+          notif("Pilih pengalaman kerja.", "err");
+          return;
+        }
+        if (!email) {
+          notif("Masukkan alamat email.", "err");
+          return;
+        }
+        if (!state.checks.cb1 || !state.checks.cb2 || !state.checks.cb3) {
+          notif("Centang semua pernyataan persetujuan.", "err");
+          return;
+        }
 
-function loadImg(input, side) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    state.skor[state.sesiAktif]['img' + side.toUpperCase()] = e.target.result;
-    renderImg(side, e.target.result);
-    notif('Gambar ' + side.toUpperCase() + ' berhasil dimuat.');
-  };
-  reader.readAsDataURL(file);
-}
+        state.psp = {
+          nama,
+          usia,
+          jabatan,
+          pengalaman,
+          email,
+          kode,
+          waktuPSP: new Date().toISOString(),
+          waktuMulai: null,
+        };
 
-function renderSkorButtons(side, val) {
-  const container = document.getElementById('scores-' + side);
-  const descs = ['Tidak memadai', 'Kurang', 'Cukup', 'Baik'];
-  container.innerHTML = [1, 2, 3, 4].map(n => {
-    const cls = val === n ? ' selected-' + n : '';
-    return '<button class="score-btn' + cls + '" onclick="setSkor(\'' + side + '\',' + n + ')">' +
-      n + '<div class="score-desc">' + descs[n - 1] + '</div></button>';
-  }).join('');
-}
+        showScreen("screen-panduan");
+      }
 
-function setSkor(side, val) {
-  state.skor[state.sesiAktif]['skor' + side.toUpperCase()] = val;
-  renderSkorButtons(side, val);
-}
+      // ══════════════════════════════════════════
+      // PANDUAN → MULAI SESI
+      // ══════════════════════════════════════════
+      function mulaiSesi() {
+        state.psp.waktuMulai = new Date().toISOString();
+        state.sesiAktif = 0;
+        state.skor = Array.from({ length: TOTAL_SESI }, () => ({
+          skorA: null,
+          skorB: null,
+          catatan: "",
+          imgA: null,
+          imgB: null,
+        }));
+        updateProgress(0, TOTAL_SESI);
+        renderSesi();
+        showScreen("screen-assess");
+      }
 
-// ══════════════════════════════════════════
-// NAVIGASI
-// ══════════════════════════════════════════
-function saveCatatan() {
-  state.skor[state.sesiAktif].catatan = document.getElementById('catatan-input').value;
-}
+      // ══════════════════════════════════════════
+      // RENDER SESI
+      // ══════════════════════════════════════════
+      function renderSesi() {
+        const i = state.sesiAktif;
+        updateProgress(i, TOTAL_SESI);
+        document.getElementById("sesi-label").textContent =
+          "Sesi " + (i + 1) + " dari " + TOTAL_SESI;
+        document.getElementById("session-info-text").innerHTML =
+          state.psp.nama +
+          '<br><span style="color:var(--muted)">' +
+          state.psp.jabatan +
+          " · " +
+          new Date().toLocaleDateString("id") +
+          "</span>";
+        document.getElementById("nav-center-label").textContent =
+          i + 1 + " / " + TOTAL_SESI;
+        document.getElementById("btn-prev").style.visibility =
+          i === 0 ? "hidden" : "visible";
+        const isLast = i === TOTAL_SESI - 1;
+        const btn = document.getElementById("btn-next");
+        btn.textContent = isLast ? "Selesai & Simpan ✓" : "Selanjutnya →";
+        btn.className = isLast ? "btn btn-success" : "btn btn-primary";
 
-function nextSesi() {
-  saveCatatan();
-  const s = state.skor[state.sesiAktif];
-  if (s.skorA === null || s.skorB === null) {
-    notif('Berikan skor untuk Gambar A dan B terlebih dahulu.', 'err');
-    return;
-  }
-  if (state.sesiAktif === TOTAL_SESI - 1) {
-    selesaiPenilaian();
-  } else {
-    state.sesiAktif++;
-    renderSesi();
-    window.scrollTo(0, 0);
-  }
-}
+        const sesi = state.skor[i];
+        renderImg("a", sesi.imgA);
+        renderImg("b", sesi.imgB);
+        renderSkorButtons("a", sesi.skorA);
+        renderSkorButtons("b", sesi.skorB);
+        document.getElementById("catatan-input").value = sesi.catatan || "";
+      }
 
-function prevSesi() {
-  saveCatatan();
-  if (state.sesiAktif > 0) {
-    state.sesiAktif--;
-    renderSesi();
-    window.scrollTo(0, 0);
-  }
-}
+      function renderImg(side, src) {
+        const container = document.getElementById("container-" + side);
+        const label = side === "a" ? "Gambar A" : "Gambar B";
+        const i = state.sesiAktif;
+        if (src) {
+          container.innerHTML = '<img src="' + src + '" alt="' + label + '">';
+        } else {
+          container.innerHTML =
+            '<div class="img-placeholder"><div class="icon">🩻</div><div>' +
+            label +
+            " belum diunggah</div>" +
+            '<label class="upload-btn" for="up-' +
+            side +
+            "-" +
+            i +
+            '">Pilih ' +
+            label +
+            "</label>" +
+            '<input type="file" id="up-' +
+            side +
+            "-" +
+            i +
+            '" accept="image/*" onchange="loadImg(this,\'' +
+            side +
+            "')\"></div>";
+        }
+      }
 
-// ══════════════════════════════════════════
-// SELESAI — SIMPAN KE GOOGLE SHEETS
-// ══════════════════════════════════════════
-async function selesaiPenilaian() {
-  const waktuSelesai = new Date().toISOString();
-  const payload = {
-    penilai: state.penilai,
-    waktuSelesai,
-    hasil: state.skor.map((s, i) => ({
-      sesi: i + 1,
-      skorA: s.skorA,
-      skorB: s.skorB,
-      catatan: s.catatan || ''
-    }))
-  };
+      function loadImg(input, side) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          state.skor[state.sesiAktif]["img" + side.toUpperCase()] =
+            e.target.result;
+          renderImg(side, e.target.result);
+          notif("Gambar " + side.toUpperCase() + " berhasil dimuat.");
+        };
+        reader.readAsDataURL(file);
+      }
 
-  // Update progress bar
-  document.getElementById('prog-fill').style.width = '100%';
-  document.getElementById('progress-label').textContent = TOTAL_SESI + ' / ' + TOTAL_SESI;
+      function renderSkorButtons(side, val) {
+        const el = document.getElementById("scores-" + side);
+        const descs = ["Tidak memadai", "Kurang", "Cukup", "Baik"];
+        el.innerHTML = [1, 2, 3, 4]
+          .map((n) => {
+            const cls = val === n ? " selected-" + n : "";
+            return (
+              '<button class="score-btn' +
+              cls +
+              '" onclick="setSkor(\'' +
+              side +
+              "'," +
+              n +
+              ')">' +
+              n +
+              '<div class="score-desc">' +
+              descs[n - 1] +
+              "</div></button>"
+            );
+          })
+          .join("");
+      }
 
-  // Simpan ke Google Sheets
-  showLoading('Menyimpan data ke Google Sheets...');
-  try {
-    await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    notif('✓ Data berhasil disimpan ke Google Sheets!');
-  } catch (err) {
-    notif('⚠ Koneksi gagal — data disimpan lokal saja.', 'err');
-    console.error(err);
-  } finally {
-    hideLoading();
-  }
+      function setSkor(side, val) {
+        state.skor[state.sesiAktif]["skor" + side.toUpperCase()] = val;
+        renderSkorButtons(side, val);
+      }
 
-  // Simpan lokal sebagai backup
-  try {
-    const backup = JSON.parse(localStorage.getItem('vga_backup') || '[]');
-    backup.push(payload);
-    localStorage.setItem('vga_backup', JSON.stringify(backup));
-  } catch (e) {}
+      function saveCatatan() {
+        state.skor[state.sesiAktif].catatan =
+          document.getElementById("catatan-input").value;
+      }
 
-  // Hitung rata-rata
-  const rataA = (state.skor.reduce((s, x) => s + x.skorA, 0) / TOTAL_SESI).toFixed(2);
-  const rataB = (state.skor.reduce((s, x) => s + x.skorB, 0) / TOTAL_SESI).toFixed(2);
-  const delta = (rataB - rataA).toFixed(2);
+      // ══════════════════════════════════════════
+      // NAVIGASI SESI
+      // ══════════════════════════════════════════
+      function nextSesi() {
+        saveCatatan();
+        const s = state.skor[state.sesiAktif];
+        if (s.skorA === null || s.skorB === null) {
+          notif("Berikan skor untuk Gambar A dan B terlebih dahulu.", "err");
+          return;
+        }
+        if (state.sesiAktif === TOTAL_SESI - 1) {
+          selesaiPenilaian();
+        } else {
+          state.sesiAktif++;
+          renderSesi();
+          window.scrollTo(0, 0);
+        }
+      }
 
-  document.getElementById('result-summary').innerHTML =
-    row('Penilai', state.penilai.nama) +
-    row('Jabatan', state.penilai.jabatan) +
-    row('Pengalaman', state.penilai.pengalaman) +
-    row('Sesi dinilai', TOTAL_SESI + ' gambar') +
-    row('Rata-rata skor A', rataA) +
-    row('Rata-rata skor B', rataB) +
-    row('Selisih rata-rata (B−A)', (delta > 0 ? '+' : '') + delta) +
-    row('Waktu selesai', new Date(waktuSelesai).toLocaleString('id'));
+      function prevSesi() {
+        saveCatatan();
+        if (state.sesiAktif > 0) {
+          state.sesiAktif--;
+          renderSesi();
+          window.scrollTo(0, 0);
+        }
+      }
 
-  // Simpan payload untuk CSV
-  window._lastPayload = payload;
-  showScreen('screen-done');
-}
+      // ══════════════════════════════════════════
+      // SELESAI — SIMPAN KE GOOGLE SHEETS
+      // ══════════════════════════════════════════
+      async function selesaiPenilaian() {
+        const waktuSelesai = new Date().toISOString();
+        const payload = {
+          penilai: state.psp,
+          waktuSelesai,
+          hasil: state.skor.map((s, i) => ({
+            sesi: i + 1,
+            skorA: s.skorA,
+            skorB: s.skorB,
+            catatan: s.catatan || "",
+          })),
+        };
 
-function row(k, v) {
-  return '<div class="result-row"><span class="key">' + k + '</span><span class="val">' + v + '</span></div>';
-}
+        updateProgress(TOTAL_SESI, TOTAL_SESI);
+        showLoading("Menyimpan data ke Google Sheets...");
 
-// ══════════════════════════════════════════
-// CSV EXPORT
-// ══════════════════════════════════════════
-function unduhCSV() {
-  const payload = window._lastPayload;
-  if (!payload) { notif('Tidak ada data.', 'err'); return; }
+        try {
+          await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          notif("✓ Data berhasil disimpan ke Google Sheets!");
+        } catch (err) {
+          notif("⚠ Koneksi gagal — unduh CSV sebagai backup.", "err");
+        } finally {
+          hideLoading();
+        }
 
-  const p = payload.penilai;
-  let csv = 'Nama,Jabatan,Pengalaman,Kode Sesi,Waktu Mulai,Waktu Selesai,Sesi,Skor A,Skor B,Selisih,Catatan\n';
-  payload.hasil.forEach(h => {
-    csv += [
-      '"' + p.nama + '"',
-      '"' + p.jabatan + '"',
-      '"' + p.pengalaman + '"',
-      '"' + (p.kode || '-') + '"',
-      '"' + p.waktuMulai + '"',
-      '"' + payload.waktuSelesai + '"',
-      h.sesi,
-      h.skorA,
-      h.skorB,
-      h.skorB - h.skorA,
-      '"' + (h.catatan || '').replace(/"/g, '""') + '"'
-    ].join(',') + '\n';
-  });
+        // Backup lokal
+        try {
+          const backup = JSON.parse(localStorage.getItem("vga_backup") || "[]");
+          backup.push(payload);
+          localStorage.setItem("vga_backup", JSON.stringify(backup));
+        } catch (e) {}
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'VGA_' + p.nama.replace(/\s+/g, '_') + '_' + Date.now() + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-  notif('CSV berhasil diunduh.');
-}
-</script>
-</body>
+        window._lastPayload = payload;
+
+        const rataA = (
+          state.skor.reduce((s, x) => s + x.skorA, 0) / TOTAL_SESI
+        ).toFixed(2);
+        const rataB = (
+          state.skor.reduce((s, x) => s + x.skorB, 0) / TOTAL_SESI
+        ).toFixed(2);
+        const delta = (parseFloat(rataB) - parseFloat(rataA)).toFixed(2);
+
+        document.getElementById("result-summary").innerHTML =
+          row("Nama penilai", state.psp.nama) +
+          row("Jabatan", state.psp.jabatan) +
+          row("Pengalaman", state.psp.pengalaman) +
+          row("Email", state.psp.email) +
+          row("Sesi dinilai", TOTAL_SESI + " gambar") +
+          row("Rata-rata skor A", rataA) +
+          row("Rata-rata skor B", rataB) +
+          row("Selisih B−A", (delta > 0 ? "+" : "") + delta) +
+          row("Waktu selesai", new Date(waktuSelesai).toLocaleString("id"));
+
+        showScreen("screen-done");
+      }
+
+      function row(k, v) {
+        return (
+          '<div class="result-row"><span class="key">' +
+          k +
+          '</span><span class="val">' +
+          v +
+          "</span></div>"
+        );
+      }
+
+      // ══════════════════════════════════════════
+      // CSV EXPORT
+      // ══════════════════════════════════════════
+      function unduhCSV() {
+        const p = window._lastPayload;
+        if (!p) {
+          notif("Tidak ada data.", "err");
+          return;
+        }
+        let csv =
+          "Nama,Usia,Jabatan,Pengalaman,Email,Kode,Waktu PSP,Waktu Mulai,Waktu Selesai,Sesi,Skor A,Skor B,Selisih,Catatan\n";
+        p.hasil.forEach((h) => {
+          csv +=
+            [
+              '"' + p.penilai.nama + '"',
+              p.penilai.usia,
+              '"' + p.penilai.jabatan + '"',
+              '"' + p.penilai.pengalaman + '"',
+              '"' + p.penilai.email + '"',
+              '"' + (p.penilai.kode || "-") + '"',
+              '"' + p.penilai.waktuPSP + '"',
+              '"' + p.penilai.waktuMulai + '"',
+              '"' + p.waktuSelesai + '"',
+              h.sesi,
+              h.skorA,
+              h.skorB,
+              h.skorB - h.skorA,
+              '"' + (h.catatan || "").replace(/"/g, '""') + '"',
+            ].join(",") + "\n";
+        });
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "VGA_" + p.penilai.nama.replace(/\s+/g, "_") + ".csv";
+        a.click();
+        URL.revokeObjectURL(url);
+        notif("CSV berhasil diunduh.");
+      }
+    </script>
+  </body>
 </html>
