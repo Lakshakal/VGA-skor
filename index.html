@@ -623,6 +623,11 @@
         max-height: 460px;
         object-fit: contain;
         display: block;
+        cursor: zoom-in;
+        transiton: transform 0.2s ease;
+      }
+      .img-container img:hover {
+        transform: scale(1.01);
       }
       .img-placeholder {
         display: flex;
@@ -1526,14 +1531,14 @@
           <div class="img-card">
             <div class="img-card-header">
               <span class="img-tag tag-a">Gambar A</span
-              ><span class="img-card-label">Citra referensi</span>
+              ><span class="img-card-label">Citra A</span>
             </div>
             <div class="img-container" id="container-a"></div>
           </div>
           <div class="img-card">
             <div class="img-card-header">
               <span class="img-tag tag-b">Gambar B</span
-              ><span class="img-card-label">Citra hasil CLAHE</span>
+              ><span class="img-card-label">Citra B</span>
             </div>
             <div class="img-container" id="container-b"></div>
           </div>
@@ -1608,6 +1613,48 @@
       const APPS_SCRIPT_URL =
         "https://script.google.com/macros/s/AKfycbzdiMGS-HL_5llHIwAxp_2Do1oufheoYveSKxvzCYn9YZ1_v1u-9D8AzoQmDttHoP6HdQ/exec";
       const TOTAL_SESI = 10;
+      const DATASET = [
+        {
+          a: "images/sesi_01_A.webp",
+          b: "images/sesi_01_B.webp",
+        },
+        {
+          a: "images/sesi_02_A.webp",
+          b: "images/sesi_02_B.webp",
+        },
+        {
+          a: "images/sesi_03_A.webp",
+          b: "images/sesi_03_B.webp",
+        },
+        {
+          a: "images/sesi_04_A.webp",
+          b: "images/sesi_04_B.webp",
+        },
+        {
+          a: "images/sesi_05_A.webp",
+          b: "images/sesi_05_B.webp",
+        },
+        {
+          a: "images/sesi_06_A.webp",
+          b: "images/sesi_06_B.webp",
+        },
+        {
+          a: "images/sesi_07_A.webp",
+          b: "images/sesi_02_B.webp",
+        },
+        {
+          a: "images/sesi_08_A.webp",
+          b: "images/sesi_08_B.webp",
+        },
+        {
+          a: "images/sesi_09_A.webp",
+          b: "images/sesi_09_B.webp",
+        },
+        {
+          a: "images/sesi_10_A.webp",
+          b: "images/sesi_10_B.webp",
+        },
+      ];
 
       // ══════════════════════════════════════════
       // STATE
@@ -1617,6 +1664,7 @@
         sesiAktif: 0,
         skor: [],
         checks: { cb1: false, cb2: false, cb3: false },
+        pairs: [],
       };
 
       // ══════════════════════════════════════════
@@ -1788,6 +1836,7 @@
       // ══════════════════════════════════════════
       function mulaiSesi() {
         state.psp.waktuMulai = new Date().toISOString();
+        state.pairs = DATASET.map((_, i) => getRandomizedPair(i));
         state.sesiAktif = 0;
         state.skor = Array.from({ length: TOTAL_SESI }, () => ({
           skorA: null,
@@ -1806,7 +1855,7 @@
       // ══════════════════════════════════════════
       function renderSesi() {
         const i = state.sesiAktif;
-        updateProgress(i, TOTAL_SESI);
+        updateProgress(i + 1, TOTAL_SESI);
         document.getElementById("sesi-label").textContent =
           "Sesi " + (i + 1) + " dari " + TOTAL_SESI;
         document.getElementById("session-info-text").innerHTML =
@@ -1826,52 +1875,28 @@
         btn.className = isLast ? "btn btn-success" : "btn btn-primary";
 
         const sesi = state.skor[i];
-        renderImg("a", sesi.imgA);
-        renderImg("b", sesi.imgB);
+        renderImg("a");
+        renderImg("b");
         renderSkorButtons("a", sesi.skorA);
         renderSkorButtons("b", sesi.skorB);
         document.getElementById("catatan-input").value = sesi.catatan || "";
       }
 
-      function renderImg(side, src) {
+      function renderImg(side) {
         const container = document.getElementById("container-" + side);
-        const label = side === "a" ? "Gambar A" : "Gambar B";
-        const i = state.sesiAktif;
-        if (src) {
-          container.innerHTML = '<img src="' + src + '" alt="' + label + '">';
-        } else {
-          container.innerHTML =
-            '<div class="img-placeholder"><div class="icon">🩻</div><div>' +
-            label +
-            " belum diunggah</div>" +
-            '<label class="upload-btn" for="up-' +
-            side +
-            "-" +
-            i +
-            '">Pilih ' +
-            label +
-            "</label>" +
-            '<input type="file" id="up-' +
-            side +
-            "-" +
-            i +
-            '" accept="image/*" onchange="loadImg(this,\'' +
-            side +
-            "')\"></div>";
-        }
-      }
 
-      function loadImg(input, side) {
-        const file = input.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          state.skor[state.sesiAktif]["img" + side.toUpperCase()] =
-            e.target.result;
-          renderImg(side, e.target.result);
-          notif("Gambar " + side.toUpperCase() + " berhasil dimuat.");
-        };
-        reader.readAsDataURL(file);
+        const data = state.pairs[state.sesiAktif];
+
+        const imgPath = side === "a" ? data.a : data.b;
+
+        container.innerHTML = `
+          <img
+            src="${imgPath}"
+            loading="lazy"
+            class="vga-image"
+            onclick="openFullscreen(this.src)"
+          >
+        `;
       }
 
       function renderSkorButtons(side, val) {
@@ -2047,6 +2072,50 @@
         a.click();
         URL.revokeObjectURL(url);
         notif("CSV berhasil diunduh.");
+      }
+      function openFullscreen(src) {
+        const overlay = document.createElement("div");
+
+        overlay.style.position = "fixed";
+        overlay.style.inset = "0";
+        overlay.style.background = "rgba(0,0,0,0.95)";
+        overlay.style.display = "flex";
+        overlay.style.alignItems = "center";
+        overlay.style.justifyContent = "center";
+        overlay.style.zIndex = "9999";
+        overlay.style.cursor = "zoom-out";
+
+        overlay.innerHTML = `
+          <img
+            src="${src}"
+            style="
+              max-width:95%;
+              max-height:95%;
+              object-fit:contain;
+            "
+          >
+        `;
+
+        overlay.onclick = () => overlay.remove();
+
+        document.body.appendChild(overlay);
+      }
+
+      function getRandomizedPair(index) {
+        const item = DATASET[index];
+
+        // Acak posisi kiri-kanan
+        if (Math.random() > 0.5) {
+          return {
+            a: item.a,
+            b: item.b,
+          };
+        }
+
+        return {
+          a: item.b,
+          b: item.a,
+        };
       }
     </script>
   </body>
