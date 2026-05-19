@@ -1968,12 +1968,20 @@
         const payload = {
           penilai: state.psp,
           waktuSelesai,
-          hasil: state.skor.map((s, i) => ({
-            sesi: i + 1,
-            skorA: s.skorA,
-            skorB: s.skorB,
-            catatan: s.catatan || "",
-          })),
+          hasil: state.skor.map((s, i) => {
+            const pair = state.pairs[i];
+
+            return {
+              sesi: i + 1,
+              skorA: s.skorA,
+              skorB: s.skorB,
+
+              tipeA: pair.labelA,
+              tipeB: pair.labelB,
+
+              catatan: s.catatan || "",
+            };
+          }),
         };
 
         updateProgress(TOTAL_SESI, TOTAL_SESI);
@@ -2104,17 +2112,23 @@
       function getRandomizedPair(index) {
         const item = DATASET[index];
 
-        // Acak posisi kiri-kanan
+        // Original di kiri
         if (Math.random() > 0.5) {
           return {
             a: item.a,
             b: item.b,
+
+            labelA: "Original",
+            labelB: "CLAHE",
           };
         }
-
+        // CLAHE di Kiri
         return {
           a: item.b,
           b: item.a,
+
+          labelA: "CLAHE",
+          labelB: "Original",
         };
       }
     </script>
