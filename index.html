@@ -624,7 +624,7 @@
         object-fit: contain;
         display: block;
         cursor: zoom-in;
-        transiton: transform 0.2s ease;
+        transition: transform 0.2s ease;
       }
       .img-container img:hover {
         transform: scale(1.01);
@@ -1615,42 +1615,72 @@
       const TOTAL_SESI = 10;
       const DATASET = [
         {
-          a: "images/sesi_01_A.webp",
+          nomorAsli: 1,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
+          a: "images/sesi_01_asli.webp",
           b: "images/sesi_01_B.webp",
         },
         {
+          nomorAsli: 2,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_02_A.webp",
           b: "images/sesi_02_B.webp",
         },
         {
+          nomorAsli: 3,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_03_A.webp",
           b: "images/sesi_03_B.webp",
         },
         {
+          nomorAsli: 4,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_04_A.webp",
           b: "images/sesi_04_B.webp",
         },
         {
+          nomorAsli: 5,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_05_A.webp",
           b: "images/sesi_05_B.webp",
         },
         {
+          nomorAsli: 6,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_06_A.webp",
           b: "images/sesi_06_B.webp",
         },
         {
+          nomorAsli: 7,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_07_A.webp",
-          b: "images/sesi_02_B.webp",
+          b: "images/sesi_07_B.webp",
         },
         {
+          nomorAsli: 8,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_08_A.webp",
           b: "images/sesi_08_B.webp",
         },
         {
+          nomorAsli: 9,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_09_A.webp",
           b: "images/sesi_09_B.webp",
         },
         {
+          nomorAsli: 10,
+          identitasA: "Asli",
+          identitasB: "CLAHE",
           a: "images/sesi_10_A.webp",
           b: "images/sesi_10_B.webp",
         },
@@ -1973,12 +2003,11 @@
 
             return {
               sesi: i + 1,
+              nomorAsli: pair.nomorAsli,
+              identitasA: pair.labelA,
+              identitas: pair.labelB,
               skorA: s.skorA,
               skorB: s.skorB,
-
-              tipeA: pair.labelA,
-              tipeB: pair.labelB,
-
               catatan: s.catatan || "",
             };
           }),
@@ -2052,7 +2081,11 @@
           return;
         }
         let csv =
-          "Nama,Usia,Jabatan,Pengalaman,Email,Kode,Waktu PSP,Waktu Mulai,Waktu Selesai,Sesi,Skor A,Skor B,Selisih,Catatan\n";
+          "Nama,Usia,Jabatan,Pengalaman,Email,Kode,Waktu PSP," +
+          "Waktu Mulai,Waktu Selesai,Sesi,No Gambar Asli," +
+          "Identitas Gambar A,Identitas Gambar B," +
+          "Skor A,Skor B,Selisih,Catatan\n";
+
         p.hasil.forEach((h) => {
           csv +=
             [
@@ -2066,6 +2099,8 @@
               '"' + p.penilai.waktuMulai + '"',
               '"' + p.waktuSelesai + '"',
               h.sesi,
+              '"' + (h.identitasA || "Asli") + '"',
+              '"' + (h.identitasB || "CLAHE") + '"',
               h.skorA,
               h.skorB,
               h.skorB - h.skorA,
@@ -2118,17 +2153,18 @@
             a: item.a,
             b: item.b,
 
-            labelA: "Original",
-            labelB: "CLAHE",
+            labelA: item.identitasA,
+            labelB: item.identitasB,
           };
         }
         // CLAHE di Kiri
         return {
+          nomorAsli: item.nomorAsli,
           a: item.b,
           b: item.a,
 
-          labelA: "CLAHE",
-          labelB: "Original",
+          labelA: item.identitasB,
+          labelB: item.identitasA,
         };
       }
     </script>
