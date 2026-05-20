@@ -1611,8 +1611,18 @@
       // KONFIGURASI
       // ══════════════════════════════════════════
       const APPS_SCRIPT_URL =
-        "https://script.google.com/macros/s/AKfycbzdiMGS-HL_5llHIwAxp_2Do1oufheoYveSKxvzCYn9YZ1_v1u-9D8AzoQmDttHoP6HdQ/exec";
+        "https://script.google.com/macros/s/AKfycbyqt0bEM-D2B8lYZr_8Cv1UrcfHLim-oQefp-_5UfDp3XUqTauMQSW-Y8nuZhOkVp8kgw/exec";
       const TOTAL_SESI = 10;
+
+      // ── PERBAIKAN 1 ──────────────────────────────────────────
+      // Tambahkan field nomorAsli, identitasA, identitasB
+      // pada setiap entri DATASET.
+      // nomorAsli  = nomor gambar sebelum diacak (1-10)
+      // identitasA = identitas file gambar A (selalu "Asli")
+      // identitasB = identitas file gambar B (selalu "CLAHE")
+      // Informasi ini akan dikirim ke Google Sheets agar
+      // peneliti bisa melacak gambar mana yang dinilai.
+      // ─────────────────────────────────────────────────────────
       const DATASET = [
         {
           nomorAsli: 1,
@@ -1995,17 +2005,29 @@
       // ══════════════════════════════════════════
       async function selesaiPenilaian() {
         const waktuSelesai = new Date().toISOString();
+
+        // ── PERBAIKAN 3 ────────────────────────────────────────
+        // Tambahkan nomorAsli, identitasA, identitasB ke payload
+        // yang dikirim ke Google Sheets.
+        // - nomorAsli  : nomor gambar sebelum diacak (1-10)
+        // - identitasA : identitas Gambar A setelah pengacakan
+        //                bisa "Asli" atau "CLAHE"
+        // - identitasB : identitas Gambar B setelah pengacakan
+        //                bisa "Asli" atau "CLAHE"
+        // Kolom-kolom ini akan tampil di Google Sheets agar
+        // peneliti bisa tahu skor mana untuk gambar Asli
+        // dan mana untuk gambar CLAHE.
+        // ──────────────────────────────────────────────────────
         const payload = {
           penilai: state.psp,
           waktuSelesai,
           hasil: state.skor.map((s, i) => {
             const pair = state.pairs[i];
-
             return {
               sesi: i + 1,
-              nomorAsli: pair.nomorAsli,
-              identitasA: pair.labelA,
-              identitas: pair.labelB,
+              nomorAsli: pair.nomorAsli, // ← BARU
+              identitasA: pair.labelA, // ← BARU: "Asli" / "CLAHE"
+              identitasB: pair.labelB, // ← BARU: "Asli" / "CLAHE"
               skorA: s.skorA,
               skorB: s.skorB,
               catatan: s.catatan || "",
@@ -2080,6 +2102,12 @@
           notif("Tidak ada data.", "err");
           return;
         }
+
+        // ── PERBAIKAN 4 ────────────────────────────────────────
+        // Tambahkan kolom No Gambar Asli, Identitas A, Identitas B
+        // pada file CSV yang diunduh agar konsisten dengan
+        // data yang tersimpan di Google Sheets.
+        // ──────────────────────────────────────────────────────
         let csv =
           "Nama,Usia,Jabatan,Pengalaman,Email,Kode,Waktu PSP," +
           "Waktu Mulai,Waktu Selesai,Sesi,No Gambar Asli," +
@@ -2099,6 +2127,7 @@
               '"' + p.penilai.waktuMulai + '"',
               '"' + p.waktuSelesai + '"',
               h.sesi,
+              h.nomorAsli || h.sesi,
               '"' + (h.identitasA || "Asli") + '"',
               '"' + (h.identitasB || "CLAHE") + '"',
               h.skorA,
@@ -2107,6 +2136,7 @@
               '"' + (h.catatan || "").replace(/"/g, '""') + '"',
             ].join(",") + "\n";
         });
+
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -2144,27 +2174,35 @@
         document.body.appendChild(overlay);
       }
 
+      // ── PERBAIKAN 2 ──────────────────────────────────────────
+      // Update getRandomizedPair agar ikut membawa nomorAsli
+      // dan menukar identitasA/identitasB ketika posisi gambar
+      // ditukar (CLAHE di kiri, Asli di kanan).
+      // Sebelumnya identitas tidak ikut ditukar sehingga
+      // Google Sheets mencatat identitas yang salah.
+      // ─────────────────────────────────────────────────────────
       function getRandomizedPair(index) {
         const item = DATASET[index];
 
-        // Original di kiri
+        // Asli di kiri (Gambar A), CLAHE di kanan (Gambar B)
         if (Math.random() > 0.5) {
           return {
+            nomorAsli: item.nomorAsli,
             a: item.a,
             b: item.b,
-
-            labelA: item.identitasA,
-            labelB: item.identitasB,
+            labelA: item.identitasA, // "Asli"
+            labelB: item.identitasB, // "CLAHE"
           };
         }
-        // CLAHE di Kiri
+
+        // CLAHE di kiri (Gambar A), Asli di kanan (Gambar B)
+        // Identitas ikut ditukar agar tetap akurat
         return {
           nomorAsli: item.nomorAsli,
           a: item.b,
           b: item.a,
-
-          labelA: item.identitasB,
-          labelB: item.identitasA,
+          labelA: item.identitasB, // "CLAHE"
+          labelB: item.identitasA, // "Asli"
         };
       }
     </script>
